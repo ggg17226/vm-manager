@@ -15,6 +15,7 @@ func main() {
 
 	LogUtils.InitLog()
 	Config.InitConfig()
+
 	model.InitDb(Config.AppConfig.Db.Username, Config.AppConfig.Db.Password, Config.AppConfig.Db.Host, Config.AppConfig.Db.DbName)
 	defer model.DBClient.Close()
 
