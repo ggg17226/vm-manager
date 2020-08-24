@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"time"
@@ -10,6 +11,7 @@ func InitGin(listenAddress string) {
 	gin.SetMode(gin.ReleaseMode)
 
 	router := gin.New()
+
 	router.Use(func(context *gin.Context) {
 		//开始时间
 		startTime := time.Now()
@@ -40,7 +42,7 @@ func InitGin(listenAddress string) {
 			}).Error()
 		}
 	})
-
+	router.Use(cors.Default())
 	router.GET("/status", GetStatus)
 
 	router.GET("/vm/:id/start", StartupVm)

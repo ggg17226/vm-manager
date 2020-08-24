@@ -24,14 +24,14 @@ func StartupVm(context *gin.Context) {
 
 	if val, ok := tasks.VmRuntimeMap[idNum]; ok {
 		if val.State == 0 {
-			context.JSON(http.StatusBadRequest, gin.H{
+			context.JSON(http.StatusOK, gin.H{
 				"status": "ok",
 				"msg":    "already running",
 			})
 		} else {
 			tmp := tasks.VmRuntimeMap[idNum]
 			go Utils.RunVm(&tmp)
-			context.JSON(http.StatusBadRequest, gin.H{
+			context.JSON(http.StatusOK, gin.H{
 				"status": "ok",
 				"msg":    "starting vm",
 			})
@@ -60,14 +60,14 @@ func ShutdownVm(context *gin.Context) {
 
 	if val, ok := tasks.VmRuntimeMap[idNum]; ok {
 		if val.State == 1 {
-			context.JSON(http.StatusBadRequest, gin.H{
+			context.JSON(http.StatusOK, gin.H{
 				"status": "ok",
 				"msg":    "already shutdown",
 			})
 		} else {
 			tmp := tasks.VmRuntimeMap[idNum]
 			go Utils.ShutdownVm(tmp.MonitorPort)
-			context.JSON(http.StatusBadRequest, gin.H{
+			context.JSON(http.StatusOK, gin.H{
 				"status": "ok",
 				"msg":    "stopping vm",
 			})

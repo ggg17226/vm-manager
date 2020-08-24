@@ -1,282 +1,197 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>管理</title>
     <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.12/vue.min.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.20.0/axios.min.js"></script>
-  </head>
-  <body>
-    <div id="app">
-      <div class="item">
+</head>
+<body>
+<div id="config">
+    基础地址：<input type="url" id="baseUrl" style="width: 300px;">
+    服务器ip：<input type="url" id="ipAddr" style="width: 300px;">
+    <button id="saveConfig" onclick="saveConfig()">保存配置</button>
+</div>
+<div>基础地址请勿以/结尾</div>
+<div id="app">
+    <div class="item">
         <span>Id</span>
         <span>Name</span>
         <span>Pid</span>
         <span>MonitorPort</span>
-        <span>VncType</span>
-        <span>VncPort</span>
         <span :style="{ width:'60px' }">操作</span>
-      </div>
-      <div class="item" v-for="(value, key) in info.vmInfo" :key="key">
-        <span>{{ key }}</span>
-        <span>{{ value.Name }}</span>
-        <span>{{ value.Pid }}</span>
-        <span>{{ value.MonitorPort }}</span>
-        <span>{{ value.VncType }}</span>
-        <span>{{ value.VncPort }}</span>
-        <span class="more" @click="onMore(key)">更多</span>
-      </div>
-      <div class="cover" v-show="coverShow" @click.stop="closeCover"></div>
-      <div class="content" v-show="coverShow">
-        <div class="item" v-for="(value, key) in currentMoreData" :key="key">
-          <span class="key">{{ key }}</span>
-          <span class="value">{{ value }}</span>
-        </div>
-      </div>
     </div>
-  </body>
-  <script>
+    <div class="item" v-for="(value, key) in info.vmInfo" :key="key">
+        <span @click="onMore(key)">{{ key }}</span>
+        <span @click="onMore(key)">{{ value.Name }}</span>
+        <span @click="onMore(key)">{{ value.Pid }}</span>
+        <span @click="onMore(key)">{{ value.MonitorPort }}</span>
+        <span>
+            <span v-if="value.Pid <= 0"><button @click="startVm(key)">启动</button></span>
+            <span v-else><button @click="stopVm(key)">停止</button><button @click="onVncCover(key)">vnc地址</button></span>
+        </span>
+    </div>
+    <div class="cover" v-show="coverShow" @click.stop="closeCover"></div>
+    <div class="content" v-show="coverShow">
+        <div class="item" v-for="(value, key) in currentMoreData" :key="key">
+            <span class="key">{{ key }}</span>
+            <span class="value">{{ value }}</span>
+        </div>
+    </div>
+</div>
+<div>点击查看详情</div>
+</body>
+<script>
+
+
+    function setConfigToPage() {
+        document.getElementById("baseUrl").value = localStorage.getItem("config_baseUrl");
+        document.getElementById("ipAddr").value = localStorage.getItem("config_ipAddr");
+    }
+
+    config = {
+        "baseUrl": localStorage.getItem("config_baseUrl"),
+        "ipAddr": localStorage.getItem("config_ipAddr"),
+    }
+
+    function saveConfig() {
+        config.baseUrl = document.getElementById("baseUrl").value
+        localStorage.setItem("config_baseUrl", config.baseUrl)
+
+        config.ipAddr = document.getElementById("ipAddr").value
+        localStorage.setItem("config_ipAddr", config.ipAddr)
+    }
+
     new Vue({
-      el: "#app",
-      data: {
-        info: {
-          status: "ok",
-          vmInfo: {
-            "1": {
-              Pid: -2,
-              MonitorPort: 25920,
-              KeyStr: "52:54:2d:44:4e:c1",
-              Cmd:
-                "/usr/bin/qemu-system-x86_64 -enable-kvm -cpu host,kvm=off  -smp 2 -m 4096M  -net nic,model=virtio,macaddr=52:54:2d:44:4e:c1  -drive file=/mnt/storage/data/vm/ubuntu-2004-apm.img,if=virtio  -net tap,script=/opt/image/qemu-ifup  -vga qxl -spice port=15920,disable-ticketing  -qmp tcp:0.0.0.0:25920,server,nowait  -daemonize ",
-              State: 1,
-              VncType: 0,
-              VncPort: 15920,
-              Name: "vm-apm",
-            },
-            "10": {
-              Pid: -2,
-              MonitorPort: 25928,
-              KeyStr: "52:54:74:f6:6b:ee",
-              Cmd:
-                "/usr/bin/qemu-system-x86_64 -enable-kvm -cpu host,kvm=off  -smp 2 -m 4096M  -net nic,model=virtio,macaddr=52:54:74:f6:6b:ee  -drive file=/mnt/storage/data/vm/ubuntu-1804-mysql-1.img,if=virtio  -net tap,script=/opt/image/qemu-ifup  -vga qxl -spice port=15928,disable-ticketing  -qmp tcp:0.0.0.0:25928,server,nowait  -daemonize ",
-              State: 1,
-              VncType: 0,
-              VncPort: 15928,
-              Name: "vm-mysql-1",
-            },
-            "11": {
-              Pid: -2,
-              MonitorPort: 25929,
-              KeyStr: "52:54:62:75:97:cf",
-              Cmd:
-                "/usr/bin/qemu-system-x86_64 -enable-kvm -cpu host,kvm=off  -smp 2 -m 4096M  -net nic,model=virtio,macaddr=52:54:62:75:97:cf  -drive file=/mnt/storage/data/vm/ubuntu-1804-mysql-2.img,if=virtio  -net tap,script=/opt/image/qemu-ifup  -vga qxl -spice port=15929,disable-ticketing  -qmp tcp:0.0.0.0:25929,server,nowait  -daemonize ",
-              State: 1,
-              VncType: 0,
-              VncPort: 15929,
-              Name: "vm-mysql-2",
-            },
-            "12": {
-              Pid: -2,
-              MonitorPort: 25930,
-              KeyStr: "52:54:a3:20:27:81",
-              Cmd:
-                "/usr/bin/qemu-system-x86_64 -enable-kvm -cpu host,kvm=off  -smp 16 -m 16384M  -net nic,model=virtio,macaddr=52:54:a3:20:27:81  -drive file=/mnt/storage/data/vm/ms-server-2019.img,if=virtio  -net tap,script=/opt/image/qemu-ifup  -vga qxl -spice port=15930,disable-ticketing  -qmp tcp:0.0.0.0:25930,server,nowait  -device vfio-pci,host=42:00.0 -daemonize ",
-              State: 1,
-              VncType: 0,
-              VncPort: 15930,
-              Name: "vm-server-2019",
-            },
-            "13": {
-              Pid: 2867992,
-              MonitorPort: 25931,
-              KeyStr: "52:54:74:c5:6b:ee",
-              Cmd:
-                "/usr/bin/qemu-system-x86_64 -enable-kvm -cpu host,kvm=off  -smp 1 -m 1024M  -net nic,model=virtio,macaddr=52:54:74:c5:6b:ee  -drive file=/mnt/storage/data/vm/ubuntu-2004-zookeeper.img,if=virtio  -net tap,script=/opt/image/qemu-ifup  -vga qxl -spice port=15931,disable-ticketing  -qmp tcp:0.0.0.0:25931,server,nowait  -daemonize ",
-              State: 0,
-              VncType: 0,
-              VncPort: 15931,
-              Name: "vm-zookeeper",
-            },
-            "14": {
-              Pid: 3769641,
-              MonitorPort: 25932,
-              KeyStr: "52:54:35:ca:f7:05",
-              Cmd:
-                "/usr/bin/qemu-system-x86_64 -enable-kvm -cpu host,kvm=off  -smp 2 -m 4096M  -net nic,model=virtio,macaddr=52:54:35:ca:f7:05  -drive file=/mnt/storage/data/vm/ubuntu-2004-kafka.img,if=virtio  -net tap,script=/opt/image/qemu-ifup  -vga qxl -spice port=15932,disable-ticketing  -qmp tcp:0.0.0.0:25932,server,nowait  -daemonize ",
-              State: 0,
-              VncType: 0,
-              VncPort: 15932,
-              Name: "vm-kafka",
-            },
-            "2": {
-              Pid: 1618671,
-              MonitorPort: 25921,
-              KeyStr: "52:54:c9:a6:0b:58",
-              Cmd:
-                "/usr/bin/qemu-system-x86_64 -enable-kvm -cpu host,kvm=off  -smp 20 -m 16384M  -net nic,model=virtio,macaddr=52:54:c9:a6:0b:58  -drive file=/mnt/storage/data/vm/ubuntu-1804-build.img,if=virtio  -net tap,script=/opt/image/qemu-ifup  -vga qxl -spice port=15921,disable-ticketing  -qmp tcp:0.0.0.0:25921,server,nowait  -daemonize ",
-              State: 0,
-              VncType: 0,
-              VncPort: 15921,
-              Name: "vm-build",
-            },
-            "4": {
-              Pid: 2868032,
-              MonitorPort: 25922,
-              KeyStr: "52:54:d3:5a:a9:86",
-              Cmd:
-                "/usr/bin/qemu-system-x86_64 -enable-kvm -cpu host,kvm=off  -smp 4 -m 8192M  -net nic,model=virtio,macaddr=52:54:d3:5a:a9:86  -drive file=/mnt/storage/data/vm/ubuntu-2004-docker-1.img,if=virtio  -net tap,script=/opt/image/qemu-ifup  -vga qxl -spice port=15922,disable-ticketing  -qmp tcp:0.0.0.0:25922,server,nowait  -daemonize ",
-              State: 0,
-              VncType: 0,
-              VncPort: 15922,
-              Name: "vm-docker-1",
-            },
-            "5": {
-              Pid: 2868143,
-              MonitorPort: 25923,
-              KeyStr: "52:54:e1:21:8e:b4",
-              Cmd:
-                "/usr/bin/qemu-system-x86_64 -enable-kvm -cpu host,kvm=off  -smp 4 -m 8192M  -net nic,model=virtio,macaddr=52:54:e1:21:8e:b4  -drive file=/mnt/storage/data/vm/ubuntu-2004-docker-2.img,if=virtio  -net tap,script=/opt/image/qemu-ifup  -vga qxl -spice port=15923,disable-ticketing  -qmp tcp:0.0.0.0:25923,server,nowait  -daemonize ",
-              State: 0,
-              VncType: 0,
-              VncPort: 15923,
-              Name: "vm-docker-2",
-            },
-            "6": {
-              Pid: 2868108,
-              MonitorPort: 25924,
-              KeyStr: "52:54:b7:ed:c1:c1",
-              Cmd:
-                "/usr/bin/qemu-system-x86_64 -enable-kvm -cpu host,kvm=off  -smp 4 -m 8192M  -net nic,model=virtio,macaddr=52:54:b7:ed:c1:c1  -drive file=/mnt/storage/data/vm/ubuntu-2004-docker-3.img,if=virtio  -net tap,script=/opt/image/qemu-ifup  -vga qxl -spice port=15924,disable-ticketing  -qmp tcp:0.0.0.0:25924,server,nowait  -daemonize ",
-              State: 0,
-              VncType: 0,
-              VncPort: 15924,
-              Name: "vm-docker-3",
-            },
-            "7": {
-              Pid: 2868067,
-              MonitorPort: 25925,
-              KeyStr: "52:54:35:cb:6a:fb",
-              Cmd:
-                "/usr/bin/qemu-system-x86_64 -enable-kvm -cpu host,kvm=off  -smp 4 -m 8192M  -net nic,model=virtio,macaddr=52:54:35:cb:6a:fb  -drive file=/mnt/storage/data/vm/ubuntu-2004-es.img,if=virtio  -net tap,script=/opt/image/qemu-ifup  -vga qxl -spice port=15925,disable-ticketing  -qmp tcp:0.0.0.0:25925,server,nowait  -daemonize ",
-              State: 0,
-              VncType: 0,
-              VncPort: 15925,
-              Name: "vm-es",
-            },
-            "8": {
-              Pid: 2868183,
-              MonitorPort: 25926,
-              KeyStr: "52:54:18:50:c2:29",
-              Cmd:
-                "/usr/bin/qemu-system-x86_64 -enable-kvm -cpu host,kvm=off  -smp 4 -m 8192M  -net nic,model=virtio,macaddr=52:54:18:50:c2:29  -drive file=/mnt/storage/data/vm/ubuntu-2004-gitlab.img,if=virtio  -net tap,script=/opt/image/qemu-ifup  -vga qxl -spice port=15926,disable-ticketing  -qmp tcp:0.0.0.0:25926,server,nowait  -daemonize ",
-              State: 0,
-              VncType: 0,
-              VncPort: 15926,
-              Name: "vm-gitlab",
-            },
-            "9": {
-              Pid: 2868224,
-              MonitorPort: 25927,
-              KeyStr: "52:54:53:3c:c1:e7",
-              Cmd:
-                "/usr/bin/qemu-system-x86_64 -enable-kvm -cpu host,kvm=off  -smp 2 -m 4096M  -net nic,model=virtio,macaddr=52:54:53:3c:c1:e7  -drive file=/mnt/storage/data/vm/ubuntu-2004-kibana.img,if=virtio  -net tap,script=/opt/image/qemu-ifup  -vga qxl -spice port=15927,disable-ticketing  -qmp tcp:0.0.0.0:25927,server,nowait  -daemonize ",
-              State: 0,
-              VncType: 0,
-              VncPort: 15927,
-              Name: "vm-kibana",
-            },
-          },
+        el: "#app",
+        data: {
+            info: {},
+            coverShow: false,
+            vncCoverShow: false,
+            currentMoreData: {},
         },
-        coverShow: false,
-        currentMoreData: {},
-      },
-      mounted() {
-        this.getSomeData();
-      },
-      methods: {
-        onMore(key) {
-          this.coverShow = true;
-          this.currentMoreData = this.info.vmInfo[key];
+        mounted() {
+            this.getSomeData();
+
+            this.timerAutoReload = setInterval(this.getSomeData, 10000);
         },
-        closeCover() {
-          this.coverShow = false;
-        },
-        // Ajax
-        getSomeData() {
-          axios({
-            method: "get",
-            url: "http://v.juhe.cn/offset/index",
-            data: {
-              lng: "116.3974965092",
-              lat: "39.908700982285396",
-              type: "2",
+        methods: {
+            onMore(key) {
+                this.coverShow = true;
+                this.currentMoreData = this.info.vmInfo[key];
             },
-          })
-            .then((res) => {
-              console.log(res);
-            })
-            .catch((e) => {
-              console.log(e);
-            });
+            closeCover() {
+                this.coverShow = false;
+            },
+            onVncCover(key) {
+                this.vncShow = true;
+                this.currentMoreData = this.info.vmInfo[key];
+            },
+            closeVncCover() {
+                this.vncShow = false;
+            },
+            // Ajax
+            getSomeData() {
+                axios({
+                    method: "get",
+                    url: config.baseUrl + "/status",
+                })
+                    .then((res) => {
+                        if (res.data.status == "ok") {
+                            this.info = res.data;
+                        }
+                    })
+                    .catch((e) => {
+                        console.log(e);
+                    });
+            },
+            startVm(id) {
+                axios({
+                    method: "get",
+                    url: config.baseUrl + "/vm/" + id + "/start",
+                })
+                    .then((res) => {
+                        console.log(res);
+                    })
+                    .catch((e) => {
+                        console.log(e);
+                    });
+            },
+            stopVm(id) {
+                axios({
+                    method: "get",
+                    url: config.baseUrl + "/vm/" + id + "/shutdown",
+                })
+                    .then((res) => {
+                        console.log(res);
+                    })
+                    .catch((e) => {
+                        console.log(e);
+                    });
+            }
         },
-      },
     });
-  </script>
-  <style>
+
+    setConfigToPage()
+</script>
+<style>
     html,
     body {
-      margin: 0;
+        margin: 0;
     }
+
     #app > .item {
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-around;
-      border-bottom: 1px solid rgba(98, 210, 161, 0.4);
+        padding: 10px 20px;
+        display: flex;
+        justify-content: space-around;
+        border-bottom: 1px solid rgba(98, 210, 161, 0.4);
     }
+
     #app > .item > span {
-      display: inline-block;
-      width: 200px;
+        display: inline-block;
+        width: 200px;
     }
-    #app > .item > span.more {
-      width: 60px;
-      cursor: pointer;
-      color: rgb(98, 210, 161);
-    }
+
+
     #app > .cover {
-      position: fixed;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      right: 0;
-      background-color: rgba(0, 0, 0, 0.5);
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-color: rgba(0, 0, 0, 0.5);
     }
+
     #app > .content {
-      width: 800px;
-      height: 440px;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      margin-left: -400px;
-      margin-top: -220px;
-      padding: 20px;
-      background-color: #ffffff;
+        width: 800px;
+        height: 440px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin-left: -400px;
+        margin-top: -220px;
+        padding: 20px;
+        background-color: #ffffff;
     }
+
     #app > .content > .item {
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-around;
-      border-bottom: 1px solid rgba(98, 210, 161, 0.4);
+        padding: 10px 20px;
+        display: flex;
+        justify-content: space-around;
+        border-bottom: 1px solid rgba(98, 210, 161, 0.4);
     }
+
     #app > .content > .item > .key {
-      display: inline-block;
-      width: 100px;
-      flex-shrink: 0;
-      text-align: left;
+        display: inline-block;
+        width: 100px;
+        flex-shrink: 0;
+        text-align: left;
     }
+
     #app > .content > .item > .value {
-      flex-grow: 1;
-      text-align: left;
+        flex-grow: 1;
+        text-align: left;
     }
-  </style>
+</style>
 </html>
