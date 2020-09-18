@@ -1,10 +1,13 @@
 package Utils
 
 import (
+	"github.com/prometheus/procfs"
 	"github.com/reiver/go-telnet"
+	"math"
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"vm-manager/model"
 )
@@ -20,6 +23,17 @@ type VmRuntimePayload struct {
 	Name        string
 }
 
+type ProcessInfoPayload struct {
+	Pid     int
+	CmdLine []string
+}
+
+var (
+	qemuProcesses           []ProcessInfoPayload
+	qemuProcessesLastUpdate int64
+	qemuProcessesUpdateLock sync.Mutex
+)
+
 func CheckVm(payload *VmRuntimePayload) {
 	pid := FindPid(payload.KeyStr)
 	if pid > 0 {
@@ -33,6 +47,8 @@ func CheckVm(payload *VmRuntimePayload) {
 }
 
 func RunVm(payload *VmRuntimePayload) {
+
+	defer setFlushNow()
 
 	pid := FindPid(payload.KeyStr)
 	if pid > 0 {
@@ -52,24 +68,37 @@ func RunVm(payload *VmRuntimePayload) {
 }
 
 func FindPid(keyStr string) int {
-	cmd := exec.Command("bash", "-c", "ps -aux | grep qemu | grep "+keyStr+" | grep -v bash | awk '{print $2}'")
-	out, err := cmd.CombinedOutput()
 
-	if err != nil || out == nil {
-		return -1
+	flushProcesses()
+
+	if qemuProcesses != nil && len(qemuProcesses) > 0 {
+		for _, process := range qemuProcesses {
+			if FindInArray(&(process.CmdLine), keyStr) {
+				return process.Pid
+			}
+		}
 	}
-	pidStr := strings.Replace(string(out), "\n", "", -1)
-	if len(pidStr) < 1 {
-		return -2
-	}
-	pid, errAtoi := strconv.Atoi(pidStr)
-	if errAtoi != nil || pid < 1 {
-		return -3
-	}
-	return pid
+	return -2
+
+	//	cmd := exec.Command("bash", "-c", "ps -aux | grep qemu | grep "+keyStr+" | grep -v bash | awk '{print $2}'")
+	//out, err := cmd.CombinedOutput()
+	//
+	//if err != nil || out == nil {
+	//	return -1
+	//}
+	//pidStr := strings.Replace(string(out), "\n", "", -1)
+	//if len(pidStr) < 1 {
+	//	return -2
+	//}
+	//pid, errAtoi := strconv.Atoi(pidStr)
+	//if errAtoi != nil || pid < 1 {
+	//	return -3
+	//}
+	//return pid
 }
 
 func ShutdownVm(port int) {
+	defer setFlushNow()
 	conn, err := telnet.DialTo("127.0.0.1:" + strconv.Itoa(port))
 	if err == nil {
 		time.Sleep(1 * time.Second)
@@ -143,4 +172,63 @@ func BuildVmRuntimePayload(vm *model.VmList) *VmRuntimePayload {
 		Name:        vm.Name,
 	}
 	return &vmRuntimePayload
+}
+
+func flushProcesses() {
+	qemuProcessesUpdateLock.Lock()
+	defer qemuProcessesUpdateLock.Unlock()
+
+	if qemuProcesses == nil || len(qemuProcesses) == 0 || math.Abs(float64(time.Now().Unix()-qemuProcessesLastUpdate)) > 10 {
+		list, err := getQemuProcList()
+		if err != nil {
+			qemuProcesses = *list
+		} else {
+			qemuProcesses = make([]ProcessInfoPayload, 0)
+		}
+		qemuProcessesLastUpdate = time.Now().Unix()
+	}
+}
+
+func setFlushNow() {
+	qemuProcessesUpdateLock.Lock()
+	defer qemuProcessesUpdateLock.Unlock()
+	qemuProcessesLastUpdate = 0
+}
+
+func getQemuProcList() (*[]ProcessInfoPayload, error) {
+	procArr, err := procfs.AllProcs()
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]ProcessInfoPayload, 0)
+
+	for _, proc := range procArr {
+		stat, err := proc.Stat()
+		if err != nil {
+			continue
+		}
+		cmdLine, err := proc.CmdLine()
+		if err != nil {
+			continue
+		}
+		if FindInArray(&cmdLine, "qemu-system") {
+			payload := ProcessInfoPayload{
+				Pid:     stat.PID,
+				CmdLine: cmdLine,
+			}
+			result = append(result, payload)
+		}
+	}
+	return &result, nil
+
+}
+
+func FindInArray(arr *[]string, str string) bool {
+	for _, s := range *arr {
+		if strings.Contains(s, str) {
+			return true
+		}
+	}
+	return false
 }
