@@ -180,7 +180,7 @@ func flushProcesses() {
 
 	if qemuProcesses == nil || len(qemuProcesses) == 0 || math.Abs(float64(time.Now().Unix()-qemuProcessesLastUpdate)) > 10 {
 		list, err := getQemuProcList()
-		if err != nil {
+		if err == nil {
 			qemuProcesses = *list
 		} else {
 			qemuProcesses = make([]ProcessInfoPayload, 0)
