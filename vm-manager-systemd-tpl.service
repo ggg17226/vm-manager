@@ -1,0 +1,14 @@
+[Unit]
+Description=vm-manager
+After=network.target libvirtd.service
+Requires=libvirtd.service
+[Service]
+Type=idle
+WorkingDirectory=/path/to/vm-manager/home
+ExecStart=/path/to/vm-manager/exe/file
+Restart=on-abort
+LimitNOFILE=65536
+TimeoutStopSec=600
+KillMode=process
+[Install]
+WantedBy=multi-user.target
