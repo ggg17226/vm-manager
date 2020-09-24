@@ -20,21 +20,21 @@
         <span>Name</span>
         <span>Pid</span>
         <span>MonitorPort</span>
-        <span :style="{ width:'60px' }">操作</span>
+        <span>操作</span>
       </div>
-      <div class="item" v-for="(value, key) in info.vmInfo" :key="key">
-        <span @click="onMore(key)">{{ key }}</span>
-        <span @click="onMore(key)">{{ value.Name }}</span>
-        <span @click="onMore(key)">{{ value.Pid }}</span>
-        <span @click="onMore(key)">{{ value.MonitorPort }}</span>
+      <div class="item" v-for="(value, key) in info.vmInfo" :key="key" @click="onContentMore(key)">
+        <span>{{ key }}</span>
+        <span>{{ value.Name }}</span>
+        <span>{{ value.Pid }}</span>
+        <span>{{ value.MonitorPort }}</span>
         <span>
-          <span v-if="value.Pid <= 0"
-            ><button @click="startVm(key)">启动</button></span
-          >
-          <span v-else
-            ><button @click="stopVm(key)">停止</button
-            ><button @click="onVncCover(key)">vnc地址</button></span
-          >
+          <span v-if="value.Pid <= 0">
+            <a-button type="primary" @click="startVm(key,$event)">启动</a-button type="primary">
+          </span>
+          <span v-else>
+            <a-button type="primary" @click="stopVm(key,$event)" style="margin-right:5px">停止</a-button>
+            <a-button type="primary" @click="onVncContentMore(key,$event)">vnc地址</a-button>
+            </span>
         </span>
       </div>
       <div class="config">
@@ -54,11 +54,14 @@
         <a-button type="primary" @click="saveConfig">保存配置</a-button>
       </div>
       <div class="cover" v-show="coverShow" @click.stop="closeCover"></div>
-      <div class="content" v-show="coverShow">
+      <div class="content" v-show="contentShow">
         <div class="item" v-for="(value, key) in currentMoreData" :key="key">
           <span class="key">{{ key }}</span>
           <span class="value">{{ value }}</span>
         </div>
+      </div>
+      <div class="content" v-show="vncContentShow">
+
       </div>
     </div>
   </body>
@@ -68,7 +71,8 @@
         return {
           info: {},
           coverShow: false,
-          vncCoverShow: false,
+          contentShow:false,
+          vncContentShow: false,
           currentMoreData: {},
           config: {
             baseUrl: "",
@@ -95,19 +99,21 @@
           localStorage.setItem("config_ipAddr", this.config.ipAddr);
           antd.message.success("保存成功", 3);
         },
-        onMore(key) {
-          this.coverShow = true;
-          this.currentMoreData = this.info.vmInfo[key];
-        },
         closeCover() {
           this.coverShow = false;
+          this.contentShow = false;
+          this.vncContentShow = false;
         },
-        onVncCover(key) {
-          this.vncShow = true;
+        onContentMore(key) {
+          this.coverShow = true;
+          this.contentShow = true;
           this.currentMoreData = this.info.vmInfo[key];
         },
-        closeVncCover() {
-          this.vncShow = false;
+        onVncContentMore(key,e) {
+          e.stopPropagation();
+          this.coverShow = true;
+          this.vncContentShow = true;
+          // this.currentMoreData = this.info.vmInfo[key];
         },
         // Ajax
         getSomeData() {
@@ -124,25 +130,29 @@
               console.log(e);
             });
         },
-        startVm(id) {
+        startVm(id,e) {
+          e.stopPropagation();
           axios({
             method: "get",
             url: this.config.baseUrl + "/vm/" + id + "/start",
           })
             .then((res) => {
               console.log(res);
+              this.getSomeData();
             })
             .catch((e) => {
               console.log(e);
             });
         },
-        stopVm(id) {
+        stopVm(id,e) {
+          e.stopPropagation();
           axios({
             method: "get",
             url: this.config.baseUrl + "/vm/" + id + "/shutdown",
           })
             .then((res) => {
               console.log(res);
+              this.getSomeData();
             })
             .catch((e) => {
               console.log(e);
@@ -170,10 +180,15 @@
     }
 
     #app > .item {
+      cursor: pointer;
       padding: 10px 20px;
       display: flex;
-      justify-content: space-around;
-      border-bottom: 1px solid #1890ff;
+      justify-content: space-between;
+      border-bottom: 1px solid #1890ff2e;
+    }
+
+    #app > .item:nth-child(1){
+      cursor: auto;
     }
 
     #app > .item > span {
@@ -206,7 +221,10 @@
       padding: 10px 20px;
       display: flex;
       justify-content: space-around;
-      border-bottom: 1px solid #1890ff;
+      border-bottom: 1px solid #1890ff2e;
+    }
+    #app > .content > .item:nth-last-child(1){
+      border-bottom:none;
     }
 
     #app > .content > .item > .key {
