@@ -1,28 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>管理</title>
-    <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.0.0/vue.global.js"></script>
+    <!-- <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.0.0/vue.global.js"></script> -->
+    <script src="./vue.global-3.0.0.js"></script>
     <!-- <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.0.0/vue.global.prod.js"></script> -->
-    <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.20.0/axios.min.js"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/ant-design-vue/2.0.0-beta.9/antd.min.js"></script>
+    <!-- <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.20.0/axios.min.js"></script> -->
+    <script src="./axios-0.20.0.min.js"></script>
+
+    <!-- <script src="https://cdn.bootcdn.net/ajax/libs/ant-design-vue/2.0.0-beta.9/antd.min.js"></script>
     <link
-      href="https://cdn.bootcdn.net/ajax/libs/ant-design-vue/2.0.0-beta.9/antd.min.css"
-      rel="stylesheet"
-    />
-  </head>
-  <body>
-    <div id="app">
-      <div class="item">
+            href="https://cdn.bootcdn.net/ajax/libs/ant-design-vue/2.0.0-beta.9/antd.min.css"
+            rel="stylesheet"
+    /> -->
+    <script src="./antd-vue-2.0.0b10.min.js"></script>
+    <link href="./antd-vue-2.0.0b10.min.css" rel="stylesheet">
+</head>
+<body>
+<div id="app">
+    <div class="item">
         <span>Id</span>
         <span>Name</span>
         <span>Pid</span>
         <span>MonitorPort</span>
         <span>操作</span>
-      </div>
-      <div class="item" v-for="(value, key) in info.vmInfo" :key="key" @click="onContentMore(key)">
+    </div>
+    <div class="item" v-for="(value, key) in info.vmInfo" :key="key" @click="onContentMore(key)">
         <span>{{ key }}</span>
         <span>{{ value.Name }}</span>
         <span>{{ value.Pid }}</span>
@@ -36,207 +41,209 @@
             <a-button type="primary" @click="onVncContentMore(key,$event)">vnc地址</a-button>
             </span>
         </span>
-      </div>
-      <div class="config">
+    </div>
+    <div class="config">
         基础地址：
         <a-input
-          type="url"
-          class="base"
-          v-model:value="config.baseUrl"
-          placeholder="基础地址请勿以/结尾"
+                type="url"
+                class="base"
+                v-model:value="config.baseUrl"
+                placeholder="基础地址请勿以/结尾"
         ></a-input>
-        服务器IP：<a-input
-          type="url"
-          class="server"
-          v-model:value="config.ipAddr"
-          placeholder="请输入服务器IP"
+        服务器IP：
+        <a-input
+                type="url"
+                class="server"
+                v-model:value="config.ipAddr"
+                placeholder="请输入服务器IP"
         ></a-input>
         <a-button type="primary" @click="saveConfig">保存配置</a-button>
-      </div>
-      <div class="cover" v-show="coverShow" @click.stop="closeCover"></div>
-      <div class="content" v-show="contentShow">
-        <div class="item" v-for="(value, key) in currentMoreData" :key="key">
-          <span class="key">{{ key }}</span>
-          <span class="value">{{ value }}</span>
-        </div>
-      </div>
-      <div class="content" v-show="vncContentShow">
-
-      </div>
     </div>
-  </body>
-  <script>
-    const App = {
-      data() {
-        return {
-          info: {},
-          coverShow: false,
-          contentShow:false,
-          vncContentShow: false,
-          currentMoreData: {},
-          config: {
-            baseUrl: "",
-            ipAddr: "",
-          },
-          ipAddr: "",
-        };
-      },
-      components: {
-        "a-input": antd.Input,
-        "a-button": antd.Button,
-      },
-      mounted() {
-        console.log(antd);
-        this.config.baseUrl = localStorage.getItem("config_baseUrl");
-        this.config.ipAddr = localStorage.getItem("config_ipAddr");
+    <div class="cover" v-show="coverShow" @click.stop="closeCover"></div>
+    <div class="content" v-show="contentShow">
+        <div class="item" v-for="(value, key) in currentMoreData" :key="key">
+            <span class="key">{{ key }}</span>
+            <span class="value">{{ value }}</span>
+        </div>
+    </div>
+    <div class="content" v-show="vncContentShow">
 
-        this.getSomeData();
-        this.timerAutoReload = setInterval(this.getSomeData, 10000);
-      },
-      methods: {
-        saveConfig() {
-          localStorage.setItem("config_baseUrl", this.config.baseUrl);
-          localStorage.setItem("config_ipAddr", this.config.ipAddr);
-          antd.message.success("保存成功", 3);
+    </div>
+</div>
+</body>
+<script>
+    const App = {
+        data() {
+            return {
+                info: {},
+                coverShow: false,
+                contentShow: false,
+                vncContentShow: false,
+                currentMoreData: {},
+                config: {
+                    baseUrl: "",
+                    ipAddr: "",
+                },
+                ipAddr: "",
+            };
         },
-        closeCover() {
-          this.coverShow = false;
-          this.contentShow = false;
-          this.vncContentShow = false;
+        components: {
+            "a-input": antd.Input,
+            "a-button": antd.Button,
         },
-        onContentMore(key) {
-          this.coverShow = true;
-          this.contentShow = true;
-          this.currentMoreData = this.info.vmInfo[key];
+        mounted() {
+            console.log(antd);
+            this.config.baseUrl = localStorage.getItem("config_baseUrl");
+            this.config.ipAddr = localStorage.getItem("config_ipAddr");
+
+            this.getSomeData();
+            this.timerAutoReload = setInterval(this.getSomeData, 10000);
         },
-        onVncContentMore(key,e) {
-          e.stopPropagation();
-          this.coverShow = true;
-          this.vncContentShow = true;
-          // this.currentMoreData = this.info.vmInfo[key];
+        methods: {
+            saveConfig() {
+                localStorage.setItem("config_baseUrl", this.config.baseUrl);
+                localStorage.setItem("config_ipAddr", this.config.ipAddr);
+                antd.message.success("保存成功", 3);
+            },
+            closeCover() {
+                this.coverShow = false;
+                this.contentShow = false;
+                this.vncContentShow = false;
+            },
+            onContentMore(key) {
+                this.coverShow = true;
+                this.contentShow = true;
+                this.currentMoreData = this.info.vmInfo[key];
+            },
+            onVncContentMore(key, e) {
+                e.stopPropagation();
+                this.coverShow = true;
+                this.vncContentShow = true;
+                // this.currentMoreData = this.info.vmInfo[key];
+            },
+            // Ajax
+            getSomeData() {
+                axios({
+                    method: "get",
+                    url: this.config.baseUrl + "/status",
+                })
+                    .then((res) => {
+                        if (res.data.status == "ok") {
+                            this.info = res.data;
+                        }
+                    })
+                    .catch((e) => {
+                        console.log(e);
+                    });
+            },
+            startVm(id, e) {
+                e.stopPropagation();
+                axios({
+                    method: "get",
+                    url: this.config.baseUrl + "/vm/" + id + "/start",
+                })
+                    .then((res) => {
+                        console.log(res);
+                        this.getSomeData();
+                    })
+                    .catch((e) => {
+                        console.log(e);
+                    });
+            },
+            stopVm(id, e) {
+                e.stopPropagation();
+                axios({
+                    method: "get",
+                    url: this.config.baseUrl + "/vm/" + id + "/shutdown",
+                })
+                    .then((res) => {
+                        console.log(res);
+                        this.getSomeData();
+                    })
+                    .catch((e) => {
+                        console.log(e);
+                    });
+            },
         },
-        // Ajax
-        getSomeData() {
-          axios({
-            method: "get",
-            url: this.config.baseUrl + "/status",
-          })
-            .then((res) => {
-              if (res.data.status == "ok") {
-                this.info = res.data;
-              }
-            })
-            .catch((e) => {
-              console.log(e);
-            });
-        },
-        startVm(id,e) {
-          e.stopPropagation();
-          axios({
-            method: "get",
-            url: this.config.baseUrl + "/vm/" + id + "/start",
-          })
-            .then((res) => {
-              console.log(res);
-              this.getSomeData();
-            })
-            .catch((e) => {
-              console.log(e);
-            });
-        },
-        stopVm(id,e) {
-          e.stopPropagation();
-          axios({
-            method: "get",
-            url: this.config.baseUrl + "/vm/" + id + "/shutdown",
-          })
-            .then((res) => {
-              console.log(res);
-              this.getSomeData();
-            })
-            .catch((e) => {
-              console.log(e);
-            });
-        },
-      },
     };
     Vue.createApp(App).mount("#app");
-  </script>
-  <style>
+</script>
+<style>
     html,
     body {
-      margin: 0;
+        margin: 0;
     }
 
     #app .config {
-      padding: 10px;
-      display: flex;
-      align-items: center;
+        padding: 10px;
+        display: flex;
+        align-items: center;
     }
 
     #app .config input {
-      margin-right: 10px;
-      width: 200px;
+        margin-right: 10px;
+        width: 200px;
     }
 
     #app > .item {
-      cursor: pointer;
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-between;
-      border-bottom: 1px solid #1890ff2e;
+        cursor: pointer;
+        padding: 10px 20px;
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid #1890ff2e;
     }
 
-    #app > .item:nth-child(1){
-      cursor: auto;
+    #app > .item:nth-child(1) {
+        cursor: auto;
     }
 
     #app > .item > span {
-      display: inline-block;
-      width: 200px;
+        display: inline-block;
+        width: 200px;
     }
 
     #app > .cover {
-      position: fixed;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      right: 0;
-      background-color: rgba(0, 0, 0, 0.5);
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-color: rgba(0, 0, 0, 0.5);
     }
 
     #app > .content {
-      width: 800px;
-      height: 440px;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      margin-left: -400px;
-      margin-top: -220px;
-      padding: 20px;
-      background-color: #ffffff;
+        width: 800px;
+        height: 440px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin-left: -400px;
+        margin-top: -220px;
+        padding: 20px;
+        background-color: #ffffff;
     }
 
     #app > .content > .item {
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-around;
-      border-bottom: 1px solid #1890ff2e;
+        padding: 10px 20px;
+        display: flex;
+        justify-content: space-around;
+        border-bottom: 1px solid #1890ff2e;
     }
-    #app > .content > .item:nth-last-child(1){
-      border-bottom:none;
+
+    #app > .content > .item:nth-last-child(1) {
+        border-bottom: none;
     }
 
     #app > .content > .item > .key {
-      display: inline-block;
-      width: 100px;
-      flex-shrink: 0;
-      text-align: left;
+        display: inline-block;
+        width: 100px;
+        flex-shrink: 0;
+        text-align: left;
     }
 
     #app > .content > .item > .value {
-      flex-grow: 1;
-      text-align: left;
+        flex-grow: 1;
+        text-align: left;
     }
-  </style>
+</style>
 </html>
