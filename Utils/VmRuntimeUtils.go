@@ -3,12 +3,14 @@ package Utils
 import (
 	"github.com/prometheus/procfs"
 	"github.com/reiver/go-telnet"
+	log "github.com/sirupsen/logrus"
 	"math"
 	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+	"vm-manager/Config"
 	"vm-manager/model"
 )
 
@@ -129,11 +131,42 @@ func BuildVmRuntimePayload(vm *model.VmList) *VmRuntimePayload {
 	cmd += " -smp " + strconv.Itoa(int(vm.Cpu))
 	cmd += " -m " + strconv.Itoa(int(vm.Mem)) + "M "
 
+	switch Config.AppConfig.Host.NetType {
+	case "dpdk":
+		memId := "mem-" + vm.Name
+		cmd += " -object memory-backend-file,id=" + memId + ",size=" + strconv.Itoa(int(vm.Mem)) + "M,mem-path=/dev/hugepages,share=on "
+		cmd += " -mem-prealloc "
+		cmd += " -numa node,memdev=" + memId + " "
+		break
+	default:
+		break
+	}
+
 	for _, mac := range vm.VmMacList {
-		cmd += " -net nic,model=virtio,macaddr=" + mac.Mac + " "
-		if len(keyStr) < 1 {
-			keyStr = mac.Mac
+
+		switch Config.AppConfig.Host.NetType {
+		case "dpdk":
+			tmpMacStr := strings.ReplaceAll(mac.Mac, ":", "")
+			socketPath := "/run/openvswitch/vhost-" + vm.Name + "-" + tmpMacStr
+			CheckAndCreatePort("vhost-"+vm.Name+"-"+tmpMacStr, socketPath)
+
+			charId := "char-" + vm.Name + "-" + tmpMacStr
+			cmd += " -chardev socket,id=" + charId + ",path=" + socketPath + ",server "
+			netDevId := "ndev-" + vm.Name + "-" + tmpMacStr
+			cmd += " -netdev type=vhost-user,id=" + netDevId + ",chardev=" + charId + ",vhostforce "
+			cmd += " -device virtio-net-pci,mac=" + mac.Mac + ",netdev=" + netDevId + " "
+			break
+		case "tap":
+			cmd += " -net nic,model=virtio,macaddr=" + mac.Mac + " "
+			if len(keyStr) < 1 {
+				keyStr = mac.Mac
+			}
+			break
+		default:
+			log.WithField("err", "unknown net type "+Config.AppConfig.Host.NetType).WithField("op", "build vm runtime payload").Fatal()
+			break
 		}
+
 	}
 	for _, disk := range vm.VmDiskList {
 		cmd += " -drive file=" + disk.DiskPath + ",if=virtio "

@@ -11,6 +11,7 @@ import (
 )
 
 func main() {
+
 	runtime.GOMAXPROCS(2)
 
 	LogUtils.InitLog()

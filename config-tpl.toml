@@ -5,3 +5,6 @@ password = "db password"
 dbName = "db name"
 [server]
 listen = ":33289"
+[host]
+# dpdk or tap
+netType = "dpdk"
