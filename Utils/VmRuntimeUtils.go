@@ -168,6 +168,9 @@ func BuildVmRuntimePayload(vm *model.VmList) *VmRuntimePayload {
 		}
 
 	}
+	if "tap" == Config.AppConfig.Host.NetType {
+		cmd += " -net tap,script=/opt/image/qemu-ifup "
+	}
 	for _, disk := range vm.VmDiskList {
 		cmd += " -drive file=" + disk.DiskPath + ",if=virtio "
 		if len(keyStr) < 1 {
@@ -177,7 +180,7 @@ func BuildVmRuntimePayload(vm *model.VmList) *VmRuntimePayload {
 			}
 		}
 	}
-	cmd += " -net tap,script=/opt/image/qemu-ifup "
+
 	for _, port := range vm.VmPortList {
 		if port.Type == 0 {
 			cmd += " -vga qxl -spice port=" + strconv.Itoa(int(port.Port)) + ",disable-ticketing "
