@@ -19,7 +19,7 @@ type VmRuntimePayload struct {
 	MonitorPort int
 	KeyStr      string
 	Cmd         string
-	State       int //0-success 1-error
+	State       int // 0-success 1-error
 	VncType     int
 	VncPort     int
 	Name        string
@@ -83,20 +83,20 @@ func FindPid(keyStr string) int {
 	return -2
 
 	//	cmd := exec.Command("bash", "-c", "ps -aux | grep qemu | grep "+keyStr+" | grep -v bash | awk '{print $2}'")
-	//out, err := cmd.CombinedOutput()
+	// out, err := cmd.CombinedOutput()
 	//
-	//if err != nil || out == nil {
+	// if err != nil || out == nil {
 	//	return -1
-	//}
-	//pidStr := strings.Replace(string(out), "\n", "", -1)
-	//if len(pidStr) < 1 {
+	// }
+	// pidStr := strings.Replace(string(out), "\n", "", -1)
+	// if len(pidStr) < 1 {
 	//	return -2
-	//}
-	//pid, errAtoi := strconv.Atoi(pidStr)
-	//if errAtoi != nil || pid < 1 {
+	// }
+	// pid, errAtoi := strconv.Atoi(pidStr)
+	// if errAtoi != nil || pid < 1 {
 	//	return -3
-	//}
-	//return pid
+	// }
+	// return pid
 }
 
 func ShutdownVm(port int) {
@@ -131,16 +131,10 @@ func BuildVmRuntimePayload(vm *model.VmList) *VmRuntimePayload {
 	cmd += " -smp " + strconv.Itoa(int(vm.Cpu))
 	cmd += " -m " + strconv.Itoa(int(vm.Mem)) + "M "
 
-	switch Config.AppConfig.Host.NetType {
-	case "dpdk":
-		memId := "mem-" + vm.Name
-		cmd += " -object memory-backend-file,id=" + memId + ",size=" + strconv.Itoa(int(vm.Mem)) + "M,mem-path=/dev/hugepages,share=on "
-		cmd += " -mem-prealloc "
-		cmd += " -numa node,memdev=" + memId + " "
-		break
-	default:
-		break
-	}
+	memId := "mem-" + vm.Name
+	cmd += " -object memory-backend-file,id=" + memId + ",size=" + strconv.Itoa(int(vm.Mem)) + "M,mem-path=/dev/hugepages,share=on "
+	cmd += " -mem-prealloc "
+	cmd += " -numa node,memdev=" + memId + " "
 
 	for _, mac := range vm.VmMacList {
 
