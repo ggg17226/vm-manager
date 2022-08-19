@@ -131,10 +131,12 @@ func BuildVmRuntimePayload(vm *model.VmList) *VmRuntimePayload {
 	cmd += " -smp " + strconv.Itoa(int(vm.Cpu))
 	cmd += " -m " + strconv.Itoa(int(vm.Mem)) + "M "
 
-	memId := "mem-" + vm.Name
-	cmd += " -object memory-backend-file,id=" + memId + ",size=" + strconv.Itoa(int(vm.Mem)) + "M,mem-path=/dev/hugepages,share=on "
-	cmd += " -mem-prealloc "
-	cmd += " -numa node,memdev=" + memId + " "
+	if Config.AppConfig.Host.NetType == "dpdk" {
+		memId := "mem-" + vm.Name
+		cmd += " -object memory-backend-file,id=" + memId + ",size=" + strconv.Itoa(int(vm.Mem)) + "M,mem-path=/dev/hugepages,share=on "
+		cmd += " -mem-prealloc "
+		cmd += " -numa node,memdev=" + memId + " "
+	}
 
 	for _, mac := range vm.VmMacList {
 
