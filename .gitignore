@@ -8,5 +8,4 @@ logs
 logs/**
 *.log
 **/*.log
-go.sum
 vm-manager
