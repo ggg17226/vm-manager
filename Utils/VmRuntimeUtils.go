@@ -127,8 +127,8 @@ func BuildVmRuntimePayload(vm *model.VmList) *VmRuntimePayload {
 	vncPort := 0
 	vncType := 0
 
-	cmd := "/usr/bin/qemu-system-x86_64 -enable-kvm -cpu host,kvm=off "
-	cmd += " -smp " + strconv.Itoa(int(vm.Cpu))
+	cmd := "/usr/bin/qemu-system-x86_64 -enable-kvm -cpu host,hv-relaxed,hv-vapic,hv-spinlocks=0x1fff,hv-time "
+	cmd += " -smp sockets=1,cores=" + strconv.Itoa(int(vm.Cpu)) + ",threads=1 "
 	cmd += " -m " + strconv.Itoa(int(vm.Mem)) + "M "
 
 	if Config.AppConfig.Host.NetType == "dpdk" {
